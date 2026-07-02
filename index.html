@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Key Signature Rapid Recall</title>
+    <title>The Circle of Suffering</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.2/build/vfe.js"></script>
 </head>
 <body>
 
@@ -14,13 +15,14 @@
             <div>Streak: <span id="streak">0</span></div>
         </div>
 
+        <div id="notation-container"></div>
+
         <div class="card">
-            <h2>Identify the signature for:</h2>
-            <div id="key-name">Loading...</div>
+            <h2>Identify this key signature:</h2>
+            <div id="key-hint">Type: Major</div>
         </div>
 
         <div id="options-container" class="options-grid"></div>
-        
         <div id="feedback" class="feedback"></div>
     </div>
 
