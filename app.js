@@ -125,25 +125,29 @@ function generateOptions(correctAnswer) {
 }
 
 function checkAnswer(selectedAnswer) {
+    if (!gameActive) return;
+
     if (selectedAnswer === currentQuestion.name) {
         score++;
-        streak++;
         feedbackElement.innerText = "Correct! 🎯";
         feedbackElement.style.color = "green";
-        
-        // Spaced Repetition tweak: reduce frequency weight if answered right
         currentQuestion.weight = Math.max(1, currentQuestion.weight - 3);
     } else {
-        streak = 0;
+        // Deduct a point, but use Math.max so the score never drops below 0
+        score = Math.max(0, score - 1); 
+        
         feedbackElement.innerText = `Incorrect! That was ${currentQuestion.name}.`;
         feedbackElement.style.color = "red";
-        
-        // Spaced Repetition tweak: pump frequency weight up so it resets back into rotation immediately
         currentQuestion.weight += 10;
     }
     
     scoreElement.innerText = score;
-    streakElement.innerText = streak;
+    
+    // Disable buttons so they can't spam clicks during the brief feedback window
+    optionsContainer.querySelectorAll("button").forEach(btn => btn.disabled = true);
+    setTimeout(nextQuestion, 1000); // 1-second delay before moving to next key
+}
+    
     
     // Freeze layout choice interactions momentarily for visualization buffer
     optionsContainer.querySelectorAll("button").forEach(btn => btn.disabled = true);
