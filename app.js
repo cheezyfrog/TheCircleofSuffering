@@ -139,24 +139,25 @@ function handleAnswer(selectedName) {
 
 // 5. The VexFlow Render Pipeline
 function renderStaff(specArray) {
+  // Clear any existing canvasses out of the way
   const oldCanvas = notationContainer.querySelector('canvas');
   if (oldCanvas) oldCanvas.remove();
   
-  const { Renderer, Stave } = Vex.Flow;
-  
-  const renderer = new Renderer(notationContainer, Renderer.Backends.CANVAS);
+  // DIRECT INITIALIZATION: Avoid object destructuring to bypass global window quirks
+  const renderer = new Vex.Flow.Renderer(notationContainer, Vex.Flow.Renderer.Backends.CANVAS);
   renderer.resize(300, 150);
   const context = renderer.getContext();
   
-  const stave = new Stave(10, 20, 280);
+  // Render clean staff lines
+  const stave = new Vex.Flow.Stave(10, 20, 280);
   stave.setContext(context);
   
+  // Alternate clefs for random variety
   const chosenClef = Math.random() > 0.5 ? 'treble' : 'bass';
   stave.addClef(chosenClef);
   
   if (specArray.length > 0) {
-    // FIXED: Convert first letter to upper case and any flat/sharp symbols to lower case 
-    // This perfectly matches VexFlow's specific lookup database constraints.
+    // Format the key signature name properly for VexFlow v4
     let rawKey = currentAnswer.split(' ')[0]; 
     let lookUpName = rawKey.charAt(0).toUpperCase() + rawKey.slice(1).toLowerCase();
     stave.addKeySignature(lookUpName);
