@@ -100,4 +100,80 @@ function endRound() {
 function generateQuestion() {
   optionsContainer.innerHTML = '';
   
-  // Pick a
+  // Pick a random key signature card
+  const correctKey = keySignatures[Math.floor(Math.random() * keySignatures.length)];
+  currentAnswer = correctKey.name;
+  keyTypeDisplay.textContent = correctKey.type;
+  
+  // Safely trigger VexFlow rendering inside a try/catch guard
+  try {
+    renderStaff(correctKey.spec);
+  } catch (error) {
+    console.error("VexFlow Rendering Crash:", error);
+    notationContainer.innerHTML = '<div id="status-message" class="error-msg" style="color:red; font-weight:bold;">Notation Engine Offline</div>';
+  }
+  
+  // Gather matching wrong choice candidates
+  let wrongCandidates = keySignatures.filter(k => k.name !== currentAnswer && k.type === correctKey.type);
+  let shuffledWrong = wrongCandidates.sort(() => 0.5 - Math.random()).slice(0, 3);
+  
+  // Group, randomize order, and construct multiple choice elements
+  let finalChoices = [correctKey, ...shuffledWrong].sort(() => 0.5 - Math.random());
+  
+  finalChoices.forEach(choice => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = choice.name;
+    btn.addEventListener('click', () => handleAnswer(choice.name));
+    optionsContainer.appendChild(btn);
+  });
+}
+
+function handleAnswer(selectedName) {
+  if (!isRoundActive) return;
+  
+  if (selectedName === currentAnswer) {
+    score++;
+    scoreDisplay.textContent = score;
+  } else {
+    // Optional point deduction penalty for wrong selections
+    if (score > 0) score--;
+    scoreDisplay.textContent = score;
+  }
+  
+  generateQuestion();
+}
+
+// 5. The VexFlow Render Pipeline
+function renderStaff(specArray) {
+  // Clear any existing canvasses out of the way
+  const oldCanvas = notationContainer.querySelector('canvas');
+  if (oldCanvas) oldCanvas.remove();
+  
+  const { Renderer, Stave, StaveModifier } = vexflow.Flow;
+  
+  // Build drawing surface
+  const renderer = new Renderer(notationContainer, Renderer.Backends.CANVAS);
+  renderer.resize(300, 150);
+  const context = renderer.getContext();
+  
+  // Render clean white staff lines on clear canvas structure
+  const stave = new Stave(10, 20, 280);
+  stave.setContext(context);
+  
+  // Alternate clefs for random variety
+  const chosenClef = Math.random() > 0.5 ? 'treble' : 'bass';
+  stave.addClef(chosenClef);
+  
+  // Add key signature layout modifiers if accidental steps exist
+  if (specArray.length > 0) {
+    // Generate an official VexFlow spec text mapping format (e.g. "Eb", "F#")
+    let lookUpName = currentAnswer.split(' ')[0];
+    stave.addKeySignature(lookUpName);
+  }
+  
+  stave.draw();
+}
+
+// 6. Bind Launch Button Event Listeners
+startButton.addEventListener('click', startRound);
