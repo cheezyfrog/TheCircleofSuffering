@@ -1,23 +1,15 @@
-// 1. Core DOM Element Selectors
 const timeDisplay = document.getElementById('time-display');
 const scoreDisplay = document.getElementById('score-display');
 const bestDisplay = document.getElementById('best-display');
 const notationContainer = document.getElementById('notation-container');
-const statusMessage = document.getElementById('status-message');
 const keyTypeDisplay = document.getElementById('key-type');
 const optionsContainer = document.getElementById('options-container');
 const startButton = document.getElementById('start-button');
 
-// 2. Game State Variables
-let timer = null;
-let timeLeft = 60;
-let score = 0;
-let currentAnswer = '';
-let isRoundActive = false;
+let timer = null, timeLeft = 60, score = 0, currentAnswer = '', isRoundActive = false;
 let highScore = localStorage.getItem('suffering-highscore') || 0;
 bestDisplay.textContent = highScore;
 
-// 3. Music Theory Database
 const keySignatures = [
   { name: 'C Major', type: 'Major', spec: [] }, { name: 'G Major', type: 'Major', spec: ['F'] },
   { name: 'D Major', type: 'Major', spec: ['F', 'C'] }, { name: 'A Major', type: 'Major', spec: ['F', 'C', 'G'] },
@@ -36,36 +28,20 @@ const keySignatures = [
   { name: 'Eb Minor', type: 'Minor', spec: ['B', 'E', 'A', 'D', 'G', 'C'] }, { name: 'Ab Minor', type: 'Minor', spec: ['B', 'E', 'A', 'D', 'G', 'C', 'F'] }
 ];
 
-// 4. Core Game Logic
-function startRound() {
-  if (isRoundActive) return;
-  isRoundActive = true;
-  score = 0;
-  timeLeft = 60;
-  scoreDisplay.textContent = score;
-  timeDisplay.textContent = timeLeft + 's';
-  startButton.style.display = 'none';
-  if (statusMessage) statusMessage.style.display = 'none';
-  generateQuestion();
-  timer = setInterval(() => {
-    timeLeft--;
-    timeDisplay.textContent = timeLeft + 's';
-    if (timeLeft <= 0) endRound();
-  }, 1000);
-}
-
-function endRound() {
-  clearInterval(timer);
-  isRoundActive = false;
-  notationContainer.innerHTML = '<div id="status-message">Time Up!</div>';
-  optionsContainer.innerHTML = '';
-  if (score > highScore) {
-    highScore = score;
-    localStorage.setItem('suffering-highscore', highScore);
-    bestDisplay.textContent = highScore;
+function renderStaff(specArray) {
+  if (typeof Vex === 'undefined') throw new Error("VexFlow not loaded");
+  notationContainer.innerHTML = '';
+  const renderer = new Vex.Flow.Renderer(notationContainer, Vex.Flow.Renderer.Backends.SVG);
+  renderer.resize(300, 150);
+  const stave = new Vex.Flow.Stave(10, 20, 280);
+  stave.setContext(renderer.getContext());
+  stave.addClef(Math.random() > 0.5 ? 'treble' : 'bass');
+  if (specArray.length > 0) {
+    let keyName = currentAnswer.split(' ')[0];
+    if (currentAnswer.includes('Minor')) keyName += 'm';
+    stave.addKeySignature(keyName);
   }
-  startButton.textContent = 'TRY AGAIN';
-  startButton.style.display = 'block';
+  stave.draw();
 }
 
 function generateQuestion() {
@@ -76,48 +52,40 @@ function generateQuestion() {
   try {
     renderStaff(correctKey.spec);
   } catch (e) {
-    console.error("VexFlow Error:", e);
-    notationContainer.innerHTML = '<div id="status-message" style="color:red; font-weight:bold;">Notation Engine Offline</div>';
+    console.error("VexFlow Critical Error:", e);
+    notationContainer.innerHTML = '<div style="color:red;">Error: ' + e.message + '</div>';
   }
   let wrongCandidates = keySignatures.filter(k => k.name !== currentAnswer && k.type === correctKey.type);
   let shuffledWrong = wrongCandidates.sort(() => 0.5 - Math.random()).slice(0, 3);
-  let finalChoices = [correctKey, ...shuffledWrong].sort(() => 0.5 - Math.random());
-  finalChoices.forEach(choice => {
+  let choices = [correctKey, ...shuffledWrong].sort(() => 0.5 - Math.random());
+  choices.forEach(choice => {
     const btn = document.createElement('button');
     btn.className = 'option-btn';
     btn.textContent = choice.name;
-    btn.addEventListener('click', () => handleAnswer(choice.name));
+    btn.onclick = () => {
+      if (choice.name === currentAnswer) score++;
+      else if (score > 0) score--;
+      scoreDisplay.textContent = score;
+      generateQuestion();
+    };
     optionsContainer.appendChild(btn);
   });
 }
 
-function handleAnswer(selectedName) {
-  if (!isRoundActive) return;
-  if (selectedName === currentAnswer) {
-    score++;
-    scoreDisplay.textContent = score;
-  } else if (score > 0) {
-    score--;
-    scoreDisplay.textContent = score;
-  }
+function startRound() {
+  if (isRoundActive) return;
+  isRoundActive = true; score = 0; timeLeft = 60;
+  scoreDisplay.textContent = score; timeDisplay.textContent = '60s';
+  startButton.style.display = 'none';
   generateQuestion();
-}
-
-// 5. VexFlow Rendering
-function renderStaff(specArray) {
-  notationContainer.innerHTML = ''; 
-  const { Renderer, Stave } = Vex.Flow;
-  const renderer = new Renderer(notationContainer, Renderer.Backends.CANVAS);
-  renderer.resize(300, 150);
-  const stave = new Stave(10, 20, 280);
-  stave.setContext(renderer.getContext());
-  stave.addClef(Math.random() > 0.5 ? 'treble' : 'bass');
-  if (specArray.length > 0) {
-    let keyName = currentAnswer.split(' ')[0];
-    if (currentAnswer.includes('Minor')) keyName += 'm';
-    stave.addKeySignature(keyName);
-  }
-  stave.draw();
+  timer = setInterval(() => {
+    timeLeft--; timeDisplay.textContent = timeLeft + 's';
+    if (timeLeft <= 0) {
+      clearInterval(timer); isRoundActive = false;
+      if (score > highScore) { highScore = score; localStorage.setItem('suffering-highscore', highScore); bestDisplay.textContent = highScore; }
+      notationContainer.innerHTML = 'Time Up!'; optionsContainer.innerHTML = ''; startButton.style.display = 'block';
+    }
+  }, 1000);
 }
 
 startButton.addEventListener('click', startRound);
