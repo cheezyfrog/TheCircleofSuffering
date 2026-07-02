@@ -14,7 +14,7 @@ body {
     border-radius: 15px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     text-align: center;
-    width: 400px;
+    width: 450px;
 }
 
 .score-container {
@@ -25,18 +25,29 @@ body {
     color: #555;
 }
 
+#notation-container {
+    background: #ffffff;
+    border: 1px solid #e1e8ed;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 120px;
+}
+
 .card {
     background: #eef2f7;
-    padding: 20px;
+    padding: 15px;
     border-radius: 10px;
     margin-bottom: 20px;
 }
 
-#key-name {
-    font-size: 2.5rem;
+#key-hint {
+    font-size: 1.5rem;
     font-weight: bold;
-    color: #2c3e50;
-    margin-top: 10px;
+    color: #e74c3c;
+    margin-top: 5px;
 }
 
 .options-grid {
@@ -53,11 +64,15 @@ button {
     font-size: 1rem;
     border-radius: 8px;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: background 0.2s, transform 0.1s;
 }
 
 button:hover {
     background-color: #2980b9;
+}
+
+button:active {
+    transform: scale(0.98);
 }
 
 .feedback {
