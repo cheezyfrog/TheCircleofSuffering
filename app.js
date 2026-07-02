@@ -143,7 +143,7 @@ function renderStaff(specArray) {
   const oldCanvas = notationContainer.querySelector('canvas');
   if (oldCanvas) oldCanvas.remove();
   
-  // Direct initialization targeting the VexFlow v4 library
+  // Direct initialization targeting the stable VexFlow v4 library
   const renderer = new Vex.Flow.Renderer(notationContainer, Vex.Flow.Renderer.Backends.CANVAS);
   renderer.resize(300, 150);
   const context = renderer.getContext();
@@ -151,20 +151,31 @@ function renderStaff(specArray) {
   const stave = new Vex.Flow.Stave(10, 20, 280);
   stave.setContext(context);
   
-  // Alternate treble and bass clefs for random variety
+  // Alternate clefs for random variety
   const chosenClef = Math.random() > 0.5 ? 'treble' : 'bass';
   stave.addClef(chosenClef);
   
   if (specArray.length > 0) {
-    let keyName = currentAnswer.split(' ')[0]; // Returns "C#", "Bb", etc.
+    let rawKey = currentAnswer.split(' ')[0]; // E.g., "C#", "Bb", "F"
     
-    // VexFlow v4 requires a trailing lowercase 'm' specifically for minor keys
+    // Explicit structural dictionary map for VexFlow v4 key signatures
+    const vexKeyMap = {
+      'C#': 'C#', 'F#': 'F#', 'B': 'B', 'E': 'E', 'A': 'A', 'D': 'D', 'G': 'G', 'C': 'C', 'F': 'F',
+      'Bb': 'Bb', 'Eb': 'Eb', 'Ab': 'Ab', 'Db': 'Db', 'Gb': 'Gb', 'Cb': 'Cb'
+    };
+    
+    let lookUpName = vexKeyMap[rawKey] || rawKey;
+    
+    // If it's a minor key, VexFlow v4 strictly expects a lowercase 'm' at the end (e.g., "Am", "C#m")
     if (currentAnswer.includes('Minor')) {
-      keyName += 'm';
+      lookUpName += 'm';
     }
     
-    stave.addKeySignature(keyName);
+    stave.addKeySignature(lookUpName);
   }
+  
+  stave.draw();
+}
   
   stave.draw();
 }
