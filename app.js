@@ -45,18 +45,29 @@ const feedbackElement = document.getElementById("feedback");
 
 // 2. VexFlow Rendering Logic
 function renderKeySignature(keyCode) {
-    notationContainer.innerHTML = ""; 
+    notationContainer.innerHTML = ""; // Clear out old render
     
-    const { Renderer, Stave } = VexFlow; 
-    
-    const renderer = new Renderer(notationContainer, Renderer.Backends.SVG);
-    renderer.resize(300, 100);
-    const context = renderer.getContext();
-    
-    const stave = new Stave(10, 0, 280);
-    stave.addClef("treble");
-    stave.addKeySignature(keyCode);
-    stave.setContext(context).draw();
+    // Safety check if VexFlow didn't load properly
+    if (typeof vexflow === 'undefined' && typeof VexFlow === 'undefined') {
+        notationContainer.innerHTML = "<p style='color:red; padding: 20px;'>Notation Engine Offline</p>";
+        return;
+    }
+
+    // Capture whichever naming convention the global window utilized
+    const VF = typeof VexFlow !== 'undefined' ? VexFlow : vexflow;
+
+    // Use the reliable Factory framework to draw everything automatically
+    const factory = new VF.Factory({
+        renderer: { elementId: 'notation-container', width: 300, height: 110 }
+    });
+
+    const system = factory.System({ width: 280 });
+
+    system.addStave({ voices: [] })
+          .addClef("treble")
+          .addKeySignature(keyCode);
+
+    factory.draw();
 }
 
 // 3. Spaced Repetition Selection Mechanics
