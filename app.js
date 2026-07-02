@@ -82,11 +82,9 @@ function endRound() {
   clearInterval(timer);
   isRoundActive = false;
   
-  // Wipe notation canvas and clear choices
   notationContainer.innerHTML = '<div id="status-message">Time Up!</div>';
   optionsContainer.innerHTML = '';
   
-  // Manage high score calculations
   if (score > highScore) {
     highScore = score;
     localStorage.setItem('suffering-highscore', highScore);
@@ -100,12 +98,10 @@ function endRound() {
 function generateQuestion() {
   optionsContainer.innerHTML = '';
   
-  // Pick a random key signature card
   const correctKey = keySignatures[Math.floor(Math.random() * keySignatures.length)];
   currentAnswer = correctKey.name;
   keyTypeDisplay.textContent = correctKey.type;
   
-  // Safely trigger VexFlow rendering inside a try/catch guard
   try {
     renderStaff(correctKey.spec);
   } catch (error) {
@@ -113,11 +109,9 @@ function generateQuestion() {
     notationContainer.innerHTML = '<div id="status-message" class="error-msg" style="color:red; font-weight:bold;">Notation Engine Offline</div>';
   }
   
-  // Gather matching wrong choice candidates
   let wrongCandidates = keySignatures.filter(k => k.name !== currentAnswer && k.type === correctKey.type);
   let shuffledWrong = wrongCandidates.sort(() => 0.5 - Math.random()).slice(0, 3);
   
-  // Group, randomize order, and construct multiple choice elements
   let finalChoices = [correctKey, ...shuffledWrong].sort(() => 0.5 - Math.random());
   
   finalChoices.forEach(choice => {
@@ -136,7 +130,6 @@ function handleAnswer(selectedName) {
     score++;
     scoreDisplay.textContent = score;
   } else {
-    // Optional point deduction penalty for wrong selections
     if (score > 0) score--;
     scoreDisplay.textContent = score;
   }
@@ -146,29 +139,26 @@ function handleAnswer(selectedName) {
 
 // 5. The VexFlow Render Pipeline
 function renderStaff(specArray) {
-  // Clear any existing canvasses out of the way
   const oldCanvas = notationContainer.querySelector('canvas');
   if (oldCanvas) oldCanvas.remove();
   
-  // FIXED: Correctly grab the components directly from the global Vex library object
   const { Renderer, Stave } = Vex.Flow;
   
-  // Build drawing surface
   const renderer = new Renderer(notationContainer, Renderer.Backends.CANVAS);
   renderer.resize(300, 150);
   const context = renderer.getContext();
   
-  // Render clean staff lines
   const stave = new Stave(10, 20, 280);
   stave.setContext(context);
   
-  // Alternate clefs for random variety
   const chosenClef = Math.random() > 0.5 ? 'treble' : 'bass';
   stave.addClef(chosenClef);
   
-  // Add key signature layout modifiers if accidental steps exist
   if (specArray.length > 0) {
-    let lookUpName = currentAnswer.split(' ')[0];
+    // FIXED: Convert first letter to upper case and any flat/sharp symbols to lower case 
+    // This perfectly matches VexFlow's specific lookup database constraints.
+    let rawKey = currentAnswer.split(' ')[0]; 
+    let lookUpName = rawKey.charAt(0).toUpperCase() + rawKey.slice(1).toLowerCase();
     stave.addKeySignature(lookUpName);
   }
   
