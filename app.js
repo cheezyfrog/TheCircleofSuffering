@@ -150,14 +150,15 @@ function renderStaff(specArray) {
   const oldCanvas = notationContainer.querySelector('canvas');
   if (oldCanvas) oldCanvas.remove();
   
-  const { Renderer, Stave, StaveModifier } = vexflow.Flow;
+  // FIXED: Correctly grab the components directly from the global Vex library object
+  const { Renderer, Stave } = Vex.Flow;
   
   // Build drawing surface
   const renderer = new Renderer(notationContainer, Renderer.Backends.CANVAS);
   renderer.resize(300, 150);
   const context = renderer.getContext();
   
-  // Render clean white staff lines on clear canvas structure
+  // Render clean staff lines
   const stave = new Stave(10, 20, 280);
   stave.setContext(context);
   
@@ -167,7 +168,6 @@ function renderStaff(specArray) {
   
   // Add key signature layout modifiers if accidental steps exist
   if (specArray.length > 0) {
-    // Generate an official VexFlow spec text mapping format (e.g. "Eb", "F#")
     let lookUpName = currentAnswer.split(' ')[0];
     stave.addKeySignature(lookUpName);
   }
