@@ -89,3 +89,127 @@ function endRound() {
     if (questionPrompt) questionPrompt.innerText = `You identified ${score} keys!`;
     
     if (score > highScore) {
+        highScore = score;
+        localStorage.setItem("keySignatureHighScore", highScore);
+        if (highScoreElement) highScoreElement.innerText = highScore;
+        if (feedbackElement) {
+            feedbackElement.innerText = "New Personal Best! 🎉";
+            feedbackElement.style.color = "green";
+        }
+    } else {
+        if (feedbackElement) {
+            feedbackElement.innerText = "Good try! Practice makes perfect.";
+            feedbackElement.style.color = "#555";
+        }
+    }
+    
+    if (startButton) {
+        startButton.innerText = "PLAY AGAIN";
+        startButton.style.display = "block";
+    }
+}
+
+function renderKeySignature(keyCode) {
+    if (!notationContainer) return;
+    notationContainer.innerHTML = ""; 
+    
+    if (typeof vexflow === 'undefined' && typeof VexFlow === 'undefined') {
+        notationContainer.innerHTML = "<p style='color:red; padding: 20px;'>Notation Engine Offline</p>";
+        return;
+    }
+
+    const VF = typeof VexFlow !== 'undefined' ? VexFlow : vexflow;
+    const factory = new VF.Factory({
+        renderer: { elementId: 'notation-container', width: 300, height: 110 }
+    });
+
+    const system = factory.System({ width: 280 });
+    system.addStave({ voices: [] }).addClef("treble").addKeySignature(keyCode);
+    factory.draw();
+}
+
+// Spaced Repetition Selection Mechanics
+function getWeightedRandomQuestion() {
+    const totalWeight = keysDataset.reduce((sum, item) => sum + item.weight, 0);
+    let randomNum = Math.random() * totalWeight;
+    
+    for (let i = 0; i < keysDataset.length; i++) {
+        randomNum -= keysDataset[i].weight;
+        if (randomNum <= 0) {
+            return keysDataset[i];
+        }
+    }
+    return keysDataset[0];
+}
+
+function nextQuestion() {
+    if (!gameActive) return;
+    if (feedbackElement) feedbackElement.innerText = "";
+    currentQuestion = getWeightedRandomQuestion();
+    if (keyHintElement) keyHintElement.innerText = `Type: ${currentQuestion.type}`;
+    renderKeySignature(currentQuestion.code);
+    generateOptions(currentQuestion.name);
+}
+
+function generateOptions(correctAnswer) {
+    if (!optionsContainer) return;
+    optionsContainer.innerHTML = "";
+    let potentialWrongOptions = keysDataset.filter(k => k.name !== correctAnswer && k.type === currentQuestion.type);
+    
+    let options = [correctAnswer];
+    while (options.length < 4 && potentialWrongOptions.length > 0) {
+        let randIndex = Math.floor(Math.random() * potentialWrongOptions.length);
+        let optionName = potentialWrongOptions[randIndex].name;
+        if (!options.includes(optionName)) {
+            options.push(optionName);
+        }
+    }
+    
+    options.sort(() => Math.random() - 0.5);
+    
+    options.forEach(optionText => {
+        const button = document.createElement("button");
+        button.innerText = optionText;
+        button.onclick = () => checkAnswer(optionText);
+        optionsContainer.appendChild(button);
+    });
+}
+
+function checkAnswer(selectedAnswer) {
+    if (!gameActive) return;
+
+    if (selectedAnswer === currentQuestion.name) {
+        score++;
+        if (feedbackElement) {
+            feedbackElement.innerText = "Correct! 🎯";
+            feedbackElement.style.color = "green";
+        }
+        currentQuestion.weight = Math.max(1, currentQuestion.weight - 3);
+    } else {
+        // Point deduction with safety floor at 0
+        score = Math.max(0, score - 1); 
+        if (feedbackElement) {
+            feedbackElement.innerText = `Incorrect! That was ${currentQuestion.name}.`;
+            feedbackElement.style.color = "red";
+        }
+        currentQuestion.weight += 10;
+    }
+    
+    if (scoreElement) scoreElement.innerText = score;
+    
+    if (optionsContainer) {
+        optionsContainer.querySelectorAll("button").forEach(btn => btn.disabled = true);
+    }
+    setTimeout(nextQuestion, 1000);
+}
+
+// Initialize the data pool silently so the start function is ready
+currentQuestion = getWeightedRandomQuestion();
+
+// Set initial screen state waiting for user trigger
+if (notationContainer) {
+    notationContainer.innerHTML = "<p style='color:#888; font-weight: 500; padding: 40px 20px;'>Press Start to Begin</p>";
+}
+if (optionsContainer) {
+    optionsContainer.innerHTML = "";
+}
