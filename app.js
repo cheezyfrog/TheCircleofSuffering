@@ -123,6 +123,7 @@ function generateQuestion() {
   });
 }
 
+// Optional point deduction penalty for wrong selections
 function handleAnswer(selectedName) {
   if (!isRoundActive) return;
   
@@ -139,28 +140,30 @@ function handleAnswer(selectedName) {
 
 // 5. The VexFlow Render Pipeline
 function renderStaff(specArray) {
-  // Clear any existing canvasses out of the way
   const oldCanvas = notationContainer.querySelector('canvas');
   if (oldCanvas) oldCanvas.remove();
   
-  // DIRECT INITIALIZATION: Avoid object destructuring to bypass global window quirks
+  // Direct initialization targeting the VexFlow v4 library
   const renderer = new Vex.Flow.Renderer(notationContainer, Vex.Flow.Renderer.Backends.CANVAS);
   renderer.resize(300, 150);
   const context = renderer.getContext();
   
-  // Render clean staff lines
   const stave = new Vex.Flow.Stave(10, 20, 280);
   stave.setContext(context);
   
-  // Alternate clefs for random variety
+  // Alternate treble and bass clefs for random variety
   const chosenClef = Math.random() > 0.5 ? 'treble' : 'bass';
   stave.addClef(chosenClef);
   
   if (specArray.length > 0) {
-    // Format the key signature name properly for VexFlow v4
-    let rawKey = currentAnswer.split(' ')[0]; 
-    let lookUpName = rawKey.charAt(0).toUpperCase() + rawKey.slice(1).toLowerCase();
-    stave.addKeySignature(lookUpName);
+    let keyName = currentAnswer.split(' ')[0]; // Returns "C#", "Bb", etc.
+    
+    // VexFlow v4 requires a trailing lowercase 'm' specifically for minor keys
+    if (currentAnswer.includes('Minor')) {
+      keyName += 'm';
+    }
+    
+    stave.addKeySignature(keyName);
   }
   
   stave.draw();
