@@ -45,16 +45,14 @@ const feedbackElement = document.getElementById("feedback");
 
 // 2. VexFlow Rendering Logic
 function renderKeySignature(keyCode) {
-    notationContainer.innerHTML = ""; // Clear out old render
+    notationContainer.innerHTML = ""; 
     
-    const { Renderer, Stave } = Vex.Flow;
+    const { Renderer, Stave } = VexFlow; 
     
-    // Set up the canvas renderer sizes
     const renderer = new Renderer(notationContainer, Renderer.Backends.SVG);
     renderer.resize(300, 100);
     const context = renderer.getContext();
     
-    // Draw a clean stave layout
     const stave = new Stave(10, 0, 280);
     stave.addClef("treble");
     stave.addKeySignature(keyCode);
