@@ -1,41 +1,32 @@
-const cacheName = 'circle-of-suffering-v3';
-
-// We only cache the bare minimum web files needed to make the PWA installable
-const basicFiles = [
-  './', 
-  './index.html', 
-  './manifest.json'
+const CACHE_NAME = 'suffering-v1';
+const ASSETS = [
+  './',
+  './index.html',
+  './style.css',
+  './app.js',
+  './manifest.json',
+  './icon-512.png'
 ];
 
-self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(cacheName).then(cache => {
-      // Safely try to cache each file individually so a missing file won't crash the app
-      return Promise.allSettled(basicFiles.map(file => cache.add(file)));
-    }).then(() => self.skipWaiting())
+// Installs assets locally
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(ASSETS);
+    })
   );
 });
 
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys => {
-      return Promise.all(keys.map(key => key !== cacheName ? caches.delete(key) : null));
-    }).then(() => self.clients.claim())
-  );
+// Controls clean activations
+self.addEventListener('activate', event => {
+  event.waitUntil(self.clients.claim());
 });
 
-// THE SECURITY BYPASS:
-self.addEventListener('fetch', e => {
-  const requestUrl = new URL(e.request.url);
-
-  // If the app is requesting an external CDN file (like VexFlow), 
-  // we exit immediately and let the browser load it normally over the internet.
-  if (requestUrl.origin !== self.location.origin) {
-    return;
-  }
-
-  // For your regular local files, pull from the network first
-  e.respondWith(
-    fetch(e.request).catch(() => caches.match(e.request))
+// Network-First strategy to ensure external scripts can stream into the engine flawlessly
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    fetch(event.request).catch(() => {
+      return caches.match(event.request);
+    })
   );
 });
