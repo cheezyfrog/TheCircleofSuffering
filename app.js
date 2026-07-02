@@ -176,9 +176,7 @@ function renderStaff(specArray) {
   
   stave.draw();
 }
-  
-  stave.draw();
-}
+
 
 // 6. Bind Launch Button Event Listeners
 startButton.addEventListener('click', startRound);
